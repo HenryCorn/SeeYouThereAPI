@@ -1,0 +1,90 @@
+openapi: 3.0.0
+servers:
+  - url: '/api/v1'
+
+info:
+  title: SeeYouThere API
+  description: API to find the cheapest common destination for multiple travelers.
+  version: 1.0.0
+  contact:
+    name: SeeYouThere Team
+    email: team@seeyouthere.example
+    url: https://seeyouthere.example
+
+tags:
+  - name: destinations
+    description: Operations for finding cheapest destinations.
+
+paths:
+  /destinations/cheapest:
+    post:
+      summary: Find the cheapest destination
+      operationId: findCheapestDestination
+      tags: [destinations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheapestDestinationRequest'
+      responses:
+        '200':
+          description: Cheapest destination found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheapestDestinationResponse'
+        '404':
+          description: No destination found for the given criteria.
+
+components:
+  schemas:
+    CheapestDestinationRequest:
+      type: object
+      required:
+        - origins
+        - date
+      properties:
+        origins:
+          type: array
+          items:
+            type: string
+          example: ["JFK", "LHR", "MAD"]
+        date:
+          type: string
+          format: date
+          example: "2025-12-01"
+        regionType:
+          type: string
+          enum: [continent, country, countries]
+          example: continent
+        regions:
+          type: array
+          items:
+            type: string
+          example: ["EU"]
+
+    CheapestDestinationResponse:
+      type: object
+      properties:
+        destinationCity:
+          type: string
+          example: "CDG"
+        destinationCountry:
+          type: string
+          example: "FR"
+        totalPrice:
+          type: number
+          format: float
+          example: 742.00
+        currency:
+          type: string
+          example: USD
+        perOriginPrices:
+          type: object
+          additionalProperties:
+            type: number
+          example:
+            JFK: 320.00
+            LHR: 180.00
+            MAD: 242.00

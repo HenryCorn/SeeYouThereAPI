@@ -1,0 +1,87 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web.Api", "src\Web.Api\Web.Api.csproj", "{6C661236-578E-4101-B659-23DE9940CF9E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{8EE4ED50-D138-4731-87C6-B051EFE34EEE}"
+	ProjectSection(SolutionItems) = preProject
+		build.cake = build.cake
+		README.md = README.md
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "spec", "spec", "{D3B09A73-6D97-4DB2-803E-9A5B71B14616}"
+	ProjectSection(SolutionItems) = preProject
+		spec\openapi-generator-ignore = spec\openapi-generator-ignore
+		spec\openapi.yaml = spec\openapi.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gen", "gen", "{A7B621A6-BB4B-4C79-BE59-43BC1DE2AFAF}"
+	ProjectSection(SolutionItems) = preProject
+		gen\.DS_Store = gen\.DS_Store
+		gen\SeeYouThere.Api.Specification\.DS_Store = gen\SeeYouThere.Api.Specification\.DS_Store
+		gen\SeeYouThere.Api.Specification\.openapi-generator-ignore = gen\SeeYouThere.Api.Specification\.openapi-generator-ignore
+		gen\SeeYouThere.Api.Specification\README.md = gen\SeeYouThere.Api.Specification\README.md
+		gen\SeeYouThere.Api.Specification\build.bat = gen\SeeYouThere.Api.Specification\build.bat
+		gen\SeeYouThere.Api.Specification\Org.OpenAPITools.sln = gen\SeeYouThere.Api.Specification\Org.OpenAPITools.sln
+		gen\SeeYouThere.Api.Specification\build.sh = gen\SeeYouThere.Api.Specification\build.sh
+		gen\SeeYouThere.Api.Specification\.openapi-generator\VERSION = gen\SeeYouThere.Api.Specification\.openapi-generator\VERSION
+		gen\SeeYouThere.Api.Specification\.openapi-generator\FILES = gen\SeeYouThere.Api.Specification\.openapi-generator\FILES
+		gen\SeeYouThere.Api.Specification\src\.DS_Store = gen\SeeYouThere.Api.Specification\src\.DS_Store
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Org.OpenAPITools.csproj = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Org.OpenAPITools.csproj
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\wwwroot\index.html = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\wwwroot\index.html
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\wwwroot\README.md = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\wwwroot\README.md
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\wwwroot\openapi-original.json = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\wwwroot\openapi-original.json
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\.DS_Store = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\.DS_Store
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Dockerfile = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Dockerfile
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Startup.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Startup.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Converters\CustomEnumConverter.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Converters\CustomEnumConverter.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\appsettings.json = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\appsettings.json
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Formatters\InputFormatterStream.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Formatters\InputFormatterStream.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Models\CheapestDestinationRequest.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Models\CheapestDestinationRequest.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Models\CheapestDestinationResponse.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Models\CheapestDestinationResponse.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\OpenApi\TypeExtensions.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\OpenApi\TypeExtensions.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Attributes\ValidateModelStateAttribute.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Attributes\ValidateModelStateAttribute.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\.gitignore = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\.gitignore
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Properties\launchSettings.json = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Properties\launchSettings.json
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\appsettings.Development.json = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\appsettings.Development.json
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Controllers\DestinationsApi.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Controllers\DestinationsApi.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Controllers\HealthApi.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Controllers\HealthApi.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Authentication\ApiAuthentication.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Authentication\ApiAuthentication.cs
+		gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Program.cs = gen\SeeYouThere.Api.Specification\src\Org.OpenAPITools\Program.cs
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Debug|x64.Build.0 = Debug|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Debug|x86.Build.0 = Debug|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Release|x64.ActiveCfg = Release|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Release|x64.Build.0 = Release|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Release|x86.ActiveCfg = Release|Any CPU
+		{6C661236-578E-4101-B659-23DE9940CF9E}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6C661236-578E-4101-B659-23DE9940CF9E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+	EndGlobalSection
+EndGlobal
