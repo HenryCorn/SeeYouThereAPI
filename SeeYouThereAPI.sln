@@ -17,6 +17,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 		.gitignore = .gitignore
+		build.cake = build.cake
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{9B97FC21-CE80-4274-AC87-3C1E805EB72D}"
+	ProjectSection(SolutionItems) = preProject
+		.config\dotnet-tools.json = .config\dotnet-tools.json
 	EndProjectSection
 EndProject
 Global
@@ -45,5 +51,6 @@ Global
 		{A9FDF2FE-546D-4ECF-8621-F988FEB9AE32} = {40D7ED77-D47E-4D03-BCAB-3C9FA643E1C1}
 		{1BAF1F21-4831-4194-84FD-4712F659BA12} = {40D7ED77-D47E-4D03-BCAB-3C9FA643E1C1}
 		{44D3C8E8-53C6-484B-8611-F4A36B480A4D} = {919FEA7A-5FA9-419F-94C7-272763669FB8}
+		{9B97FC21-CE80-4274-AC87-3C1E805EB72D} = {B8390E19-9FBD-4FE8-A3F1-6072F00CF7C7}
 	EndGlobalSection
 EndGlobal
