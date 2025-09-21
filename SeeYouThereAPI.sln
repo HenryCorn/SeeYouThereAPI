@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		README.md = README.md
 		.gitignore = .gitignore
 		build.cake = build.cake
+		openapi.yaml = openapi.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{9B97FC21-CE80-4274-AC87-3C1E805EB72D}"

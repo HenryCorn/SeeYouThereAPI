@@ -1,13 +1,13 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: SeeYouThere API
   version: 1.0.0
-  description: >
-    Finds the cheapest common destination for a set of travelers flying from different origins.
 paths:
   /api/cheapest-destination:
     post:
       summary: Find cheapest common destination
+      operationId: PostCheapestDestination
+      tags: [CheapestDestination]
       requestBody:
         required: true
         content:
@@ -25,15 +25,8 @@ components:
   schemas:
     CheapestDestinationRequest:
       type: object
-      required: [origins, regionType, regions, date]
       properties:
         origins:
-          type: array
-          items: { type: string }
-        regionType:
-          type: string
-          enum: [continent, country, countries]
-        regions:
           type: array
           items: { type: string }
         date:
@@ -43,6 +36,4 @@ components:
       type: object
       properties:
         destinationCity:  { type: string }
-        destinationCountry: { type: string }
-        totalPrice:      { type: number, format: float }
-        currency:        { type: string }
+        totalPrice:       { type: number, format: float }
