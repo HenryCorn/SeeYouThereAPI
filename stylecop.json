@@ -1,0 +1,38 @@
+{
+  "settings": {
+    "analyzerSettings": {
+      "excludedFiles": [
+        "gen/**/*.cs",
+        "tools/**"
+      ]
+    },
+
+    "documentationRules": {
+      "companyName": "SeeYouThere",
+      "documentExposedElements": true,
+      "documentInternalElements": false,
+      "documentPrivateElements": false,
+      "documentInterfaces": true,
+      "xmlHeader": false,
+      "fileNamingConvention": "stylecop"
+    },
+
+    "orderingRules": {
+      "usingDirectivesPlacement": "outsideNamespace",
+      "systemUsingDirectivesFirst": true,
+      "blankLinesBetweenUsingGroups": "require"
+    },
+    
+    "layoutRules": {
+      "newlineAtEndOfFile": "require"
+    },
+
+    "readabilityRules": {
+      "allowBuiltInTypeAliases": true
+    },
+
+    "namingRules": {
+      "allowCommonHungarianPrefixes": true
+    }
+  }
+}
