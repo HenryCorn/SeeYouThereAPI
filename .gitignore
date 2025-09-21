@@ -52,3 +52,15 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# build output
+bin/
+obj/
+
+# OpenAPI generated code
+gen/
+
+# Cake build tools/addins cache
+tools/
+
+.idea/
