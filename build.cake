@@ -69,17 +69,23 @@ Task("Build")
     .Does(() => {
         DotNetBuild(sln, new DotNetBuildSettings { Configuration = "Release" });
     });
-
+    
 Task("Docker")
     .IsDependentOn("Build")
-    .Does(() => {
-        var version = GetApiVersion();        // <<== pick version from openapi.yaml
-        Information($"Building Docker image with tag: {dockerImageName}:{version}");
-        DockerBuild(new DockerImageBuildSettings
-        {
-            Tag = new[] { $"{dockerRegistry}/{dockerImageName}:{version}" }
-        }, "./");
-    });
+    .Does(() =>
+{
+    var version = "latest"; // or parse from openapi.yaml if you like
+    var imageTag = $"seeyouthereapi:{version}";
+    Information($"Building Docker image {imageTag}");
+
+    var settings = new DockerImageBuildSettings
+    {
+        Tag = new[] { imageTag }
+    };
+
+    DockerBuild(settings, ".");
+});
+
 
 Task("Default").IsDependentOn("Build");
 
