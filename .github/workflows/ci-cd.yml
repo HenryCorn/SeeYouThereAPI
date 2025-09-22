@@ -27,7 +27,7 @@ jobs:
             -i /local/spec/openapi.yaml \
             -g aspnetcore \
             -o /local/gen/SeeYouThere.Api.Specification \
-            --additional-properties=packageName=SeeYouThere.Api.Specification,aspnetCoreVersion=6.0,buildTarget=library
+            --additional-properties=packageName=SeeYouThere.Api.Specification,aspnetCoreVersion=8.0,buildTarget=library,classModifier=abstract,useSwashbuckle=false
 
       - name: Restore & Build
         run: dotnet build --configuration Release
