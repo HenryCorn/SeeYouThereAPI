@@ -19,6 +19,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+          
+      - name: Generate OpenAPI Server Code
+        run: |
+          docker run --rm -v $PWD:/local \
+            openapitools/openapi-generator-cli:latest generate \
+            -i /local/spec/openapi.yaml \
+            -g aspnetcore \
+            -o /local/gen/SeeYouThere.Api.Specification \
+            --additional-properties=packageName=SeeYouThere.Api.Specification,aspnetCoreVersion=6.0,buildTarget=library
 
       - name: Restore & Build
         run: dotnet build --configuration Release
