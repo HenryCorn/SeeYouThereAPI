@@ -19,7 +19,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-          
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Generate OpenAPI Server Code
         run: |
           docker run --rm -v $PWD:/local \
@@ -27,13 +35,13 @@ jobs:
             -i /local/spec/openapi.yaml \
             -g aspnetcore \
             -o /local/gen/SeeYouThere.Api.Specification \
-            --additional-properties=packageName=SeeYouThere.Api.Specification,aspnetCoreVersion=8.0,buildTarget=library,classModifier=abstract,useSwashbuckle=false
+            --additional-properties=packageName=SeeYouThere.Api.Specification,aspnetCoreVersion=9.0,buildTarget=library,classModifier=abstract,useSwashbuckle=false
 
       - name: Restore & Build
-        run: dotnet build --configuration Release
+        run: dotnet build SeeYouThereAPI.sln --configuration Release --no-restore
 
       - name: Run Tests
-        run: dotnet test --configuration Release --no-build
+        run: dotnet test SeeYouThereAPI.sln --configuration Release --no-build
 
   docker-publish:
     needs: build-test
@@ -54,7 +62,7 @@ jobs:
       - name: Extract version from openapi.yaml
         id: version
         run: |
-          VERSION=$(grep 'version:' spec/openapi.yaml | head -1 | awk '{print $2}')
+          VERSION=$(grep '^  version:' spec/openapi.yaml | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image

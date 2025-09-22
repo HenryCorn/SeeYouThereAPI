@@ -1,3 +1,7 @@
+// <copyright file="Startup.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
 namespace Web.Api
 {
     public class Startup(IConfiguration configuration)

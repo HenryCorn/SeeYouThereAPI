@@ -1,10 +1,12 @@
-// Copyright (c) SeeYouThere. All rights reserved.
+// <copyright file="DestinationsController.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace Web.Api.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
 using Org.OpenAPITools.Controllers;
 using Org.OpenAPITools.Models;
-
-namespace Web.Api.Controllers;
 
 /// <inheritdoc />
 public class DestinationsController : DestinationsApiController
