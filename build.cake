@@ -7,7 +7,7 @@
 var target = Argument("Target", "Default");
 
 //////////////////////////////////////////////////////////////////////
-// Declarations
+// Paths & images
 //////////////////////////////////////////////////////////////////////
 var sln            = File("SeeYouThereAPI.sln");
 var openApiFile    = File("spec/openapi.yaml");
@@ -17,7 +17,7 @@ var generatorImage = "openapitools/openapi-generator-cli:latest";
 var validatorImage = "wework/speccy:latest";
 
 //////////////////////////////////////////////////////////////////////
-// Helper: extract `info.version` from openapi.yaml
+// Helper: extract info.version from openapi.yaml
 //////////////////////////////////////////////////////////////////////
 string GetApiVersion()
 {
@@ -60,7 +60,6 @@ Task("GenerateServer")
     .Does(() =>
 {
     var dir = MakeAbsolute(Directory("./"));
-    // Remove old generated code first
     CleanDirectories("./gen/SeeYouThere.Api.Specification/**");
 
     DockerRun(
@@ -91,16 +90,17 @@ Task("Docker")
     .Does(() =>
 {
     var version  = GetApiVersion();
-    var imageTag = $"{dockerImage}:{version}";
+    var imageTag = $"{dockerRegistry}/{dockerImage}:{version}";
+    var latest   = $"{dockerRegistry}/{dockerImage}:latest";
+
     Information($"Building Docker image {imageTag}");
 
     DockerBuild(new DockerImageBuildSettings
     {
-        Tag = new[] { imageTag, $"{dockerImage}:latest" }
+        Tag = new[] { imageTag, latest }
     }, ".");
 });
 
-Task("Default")
-    .IsDependentOn("Build");
+Task("Default").IsDependentOn("Build");
 
 RunTarget(target);
