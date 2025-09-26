@@ -1,4 +1,4 @@
-#addin nuget:?package=Cake.Docker&version=1.0.0
+#addin nuget:?package=Cake.Docker&version=1.1.0
 #addin nuget:?package=YamlDotNet&version=13.1.1
 
 //////////////////////////////////////////////////////////////////////
@@ -9,7 +9,7 @@ var target = Argument("Target", "Default");
 //////////////////////////////////////////////////////////////////////
 // Paths & images
 //////////////////////////////////////////////////////////////////////
-var sln            = File("SeeYouThereAPI.sln");
+var sln            = File("SeeYouThereApi.sln");
 var openApiFile    = File("spec/openapi.yaml");
 var dockerRegistry = EnvironmentVariable("DOCKER_REGISTRY") ?? "local";
 var dockerImage    = "seeyouthereapi";
