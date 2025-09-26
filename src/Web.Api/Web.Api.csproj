@@ -18,11 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="../../gen/SeeYouThere.Api.Specification/src/**/*.cs" Exclude="../../gen/SeeYouThere.Api.Specification/src/**/Program.cs;&#xD;&#xA;                   ../../gen/SeeYouThere.Api.Specification/src/**/Startup.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="../../gen/**/*.cs" />
+    <Compile Include="../../gen/SeeYouThere.Api.Specification/src/**/*.cs"
+             Exclude="../../gen/SeeYouThere.Api.Specification/src/**/Program.cs;
+                   ../../gen/SeeYouThere.Api.Specification/src/**/Startup.cs" />
   </ItemGroup>
 
 </Project>

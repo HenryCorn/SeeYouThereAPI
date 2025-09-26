@@ -10,7 +10,6 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,8 +19,14 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore & Build
-        run: dotnet build --configuration Release
+      - name: Install Cake
+        run: |
+          dotnet new tool-manifest --force
+          dotnet tool install Cake.Tool --version 4.*
+          dotnet tool restore
+
+      - name: Build & Test via Cake
+        run: dotnet cake --target=Build
 
       - name: Run Tests
         run: dotnet test --configuration Release --no-build
@@ -35,24 +40,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install Cake
+        run: |
+          dotnet new tool-manifest --force
+          dotnet tool install Cake.Tool --version 4.*
+          dotnet tool restore
+
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from openapi.yaml
-        id: version
-        run: |
-          VERSION=$(grep 'version:' spec/openapi.yaml | head -1 | awk '{print $2}')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/seeyouthereapi:latest
-            ghcr.io/${{ github.repository_owner }}/seeyouthereapi:${{ steps.version.outputs.version }}
+      - name: Build & Push Docker Image
+        run: dotnet cake --target=Docker
