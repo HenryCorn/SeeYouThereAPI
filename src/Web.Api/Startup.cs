@@ -7,9 +7,13 @@ namespace Web.Api;
 using Core.Configuration;
 using Core.External.Amadeus;
 using Core.External.Amadeus.Testing;
+using Core.Infrastructure;
 using Core.Interfaces;
+using Core.Validation;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Web.Api.Filters;
 
 /// <summary>
 /// The startup class for configuring services and the app's request pipeline.
@@ -31,19 +35,36 @@ public class Startup
 
     private IConfiguration Configuration { get; }
 
+    // Configure services here
     private void ConfigureServices(IServiceCollection services)
     {
+        // Add CORS support
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(builder =>
             {
                 builder.AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
             });
         });
 
-        services.AddControllers();
+        // Add controllers (no route prefix needed as controllers already have the /api/v1 prefix)
+        services.AddControllers(options =>
+        {
+            // Add region validation filter to all actions
+            options.Filters.Add<ValidateRegionFilter>();
+        });
+
+        // Register validation services
+        services.AddSingleton<IRegionValidator, RegionValidator>();
+
+        // Configure resilience options
+        var resilienceOptions = new ResilienceOptions();
+        Configuration.GetSection("Resilience").Bind(resilienceOptions);
+        services.Configure<ResilienceOptions>(Configuration.GetSection("Resilience"));
+
+        // Swagger/OpenAPI
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
         {
@@ -64,7 +85,8 @@ public class Startup
         }
         else
         {
-            services.AddHttpClient<IFlightSearchClient, AmadeusFlightSearchClient>();
+            // Use resilient HTTP client for Amadeus API
+            services.AddResilientAmadeusClient(resilienceOptions);
         }
     }
 
