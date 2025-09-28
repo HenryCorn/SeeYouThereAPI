@@ -64,6 +64,12 @@ namespace Web.Api
                 });
             });
 
+            // Add API rate limiting
+            services.AddApiRateLimiting(options =>
+            {
+                Configuration.GetSection("RateLimit").Bind(options);
+            });
+
             // Add controllers with JSON options for problem details
             services.AddControllers(options =>
             {
@@ -198,6 +204,9 @@ namespace Web.Api
             app.UseHttpsRedirection();
 
             app.UseMiddleware<CorrelationIdMiddleware>();
+
+            // Add rate limiting middleware early in the pipeline
+            app.UseApiRateLimiting();
 
             app.UseHttpCacheHeaders();
 

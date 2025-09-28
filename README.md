@@ -49,6 +49,24 @@ The system is designed to work with multiple flight data providers:
 - Kiwi API
 - More providers can be integrated via the `IFlightSearchClient` interface
 
+#### API Protection and Resiliency
+
+The API includes several mechanisms to ensure stability and protect against abuse:
+
+- **Rate Limiting**: Limits requests per client IP address using a fixed window algorithm
+  - Configurable token limits and replenishment rates
+  - Returns 429 Too Many Requests with Retry-After headers when limits are exceeded
+  - Uses RFC7807 problem details format for error responses
+
+- **Request Validation**: Validates incoming requests using FluentValidation
+  - Returns detailed 400 Bad Request responses with field-specific error messages
+  - Documents validation constraints in Swagger/OpenAPI specifications
+
+- **Resilient HTTP Clients**: Implements resilience patterns for external API calls
+  - Circuit breakers to prevent cascading failures
+  - Retry policies for transient errors
+  - Timeouts for unresponsive external services
+
 #### Caching System
 
 The API includes an in-memory caching system to improve performance and reduce calls to flight data providers:
