@@ -2,6 +2,10 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using Core.Configuration;
+using Core.External.Kiwi;
+using Core.Interfaces;
+
 namespace Web.Api
 {
     public class Startup(IConfiguration configuration)
@@ -17,6 +21,13 @@ namespace Web.Api
             // Swagger/OpenAPI
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
+            
+            // Configure Kiwi Flight Search options from appsettings
+            services.Configure<KiwiFlightSearchOptions>(
+                Configuration.GetSection("FlightSearch:Kiwi"));
+                
+            // Register HttpClient for KiwiFlightSearchClient
+            services.AddHttpClient<IFlightSearchClient, KiwiFlightSearchClient>();
         }
 
         // Configure the HTTP pipeline here
