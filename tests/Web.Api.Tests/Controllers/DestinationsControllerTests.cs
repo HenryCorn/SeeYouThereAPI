@@ -192,7 +192,7 @@ namespace Web.Api.Tests.Controllers
 
             result.Should().BeOfType<NotFoundObjectResult>();
             var statusCodeResult = result as ObjectResult;
-            statusCodeResult?.StatusCode.Should().Be(500);
+            statusCodeResult?.StatusCode.Should().Be(404);
         }
     }
 }
