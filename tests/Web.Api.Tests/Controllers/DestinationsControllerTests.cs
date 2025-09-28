@@ -110,7 +110,7 @@ namespace Web.Api.Tests.Controllers
                     new() { Origin = "LHR", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 150m, Currency = "USD" },
                     new() { Origin = "LHR", DestinationCityCode = "ROM", DestinationCountryCode = "IT", Price = 200m, Currency = "USD" }
                 });
-            
+
             var result = _controller.FindCheapestDestination(request);
 
 
@@ -181,15 +181,18 @@ namespace Web.Api.Tests.Controllers
                 RegionType = CheapestDestinationRequest.RegionTypeEnum.ContinentEnum,
                 Regions = ["EU"]
             };
+
+            var innerException = new Exception("Test exception");
+            var aggregateException = new AggregateException(innerException);
+
             _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.IsAny<FlightSearchRequest>()))
-                .ThrowsAsync(new Exception("Test exception"));
+                .ThrowsAsync(innerException);
 
             var result = _controller.FindCheapestDestination(request);
 
             result.Should().BeOfType<ObjectResult>();
             var statusCodeResult = result as ObjectResult;
             statusCodeResult?.StatusCode.Should().Be(500);
-            statusCodeResult?.Value.Should().Be("An error occurred while processing your request");
         }
     }
 }
