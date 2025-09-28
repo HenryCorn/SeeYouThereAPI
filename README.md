@@ -49,6 +49,15 @@ The system is designed to work with multiple flight data providers:
 - Kiwi API
 - More providers can be integrated via the `IFlightSearchClient` interface
 
+#### Caching System
+
+The API includes an in-memory caching system to improve performance and reduce calls to flight data providers:
+
+- **Cache Keys**: Results are cached based on normalized request parameters (origins + region + date + currency)
+- **Cache TTL**: Default time-to-live for cached results is 10 minutes (configurable)
+- **Cache Bypass**: Clients can bypass the cache by sending the `Cache-Control: no-cache` header
+- **Configuration**: Caching can be enabled/disabled and TTL adjusted via application settings
+
 ## Getting Started
 
 ### Prerequisites
@@ -58,7 +67,7 @@ The system is designed to work with multiple flight data providers:
 
 ### Configuration
 
-Configure your flight data provider API keys in `appsettings.json`:
+Configure your flight data provider API keys and cache settings in `appsettings.json`:
 
 ```json
 {
@@ -68,6 +77,10 @@ Configure your flight data provider API keys in `appsettings.json`:
   },
   "Kiwi": {
     "ApiKey": "your-kiwi-api-key"
+  },
+  "Cache": {
+    "Enabled": true,
+    "FlightSearchCacheTtlMinutes": 10
   }
 }
 ```
@@ -117,6 +130,24 @@ Response:
     }
   },
   "allCommonDestinations": ["CDG", "AMS", "FCO", "MAD"]
+}
+```
+
+### Bypassing Cache
+
+To bypass the cache and force a fresh search from flight providers:
+
+```http
+POST /api/destinations/search
+Content-Type: application/json
+Cache-Control: no-cache
+
+{
+  "origins": ["JFK", "LHR", "SIN"],
+  "departureDate": "2025-12-01",
+  "returnDate": "2025-12-10",
+  "currency": "USD",
+  "continentFilter": "EU"
 }
 ```
 

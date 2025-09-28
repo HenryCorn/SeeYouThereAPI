@@ -2,133 +2,163 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace Web.Api;
-
-using Core.Configuration;
-using Core.External.Amadeus;
-using Core.External.Amadeus.Testing;
-using Core.Infrastructure;
-using Core.Interfaces;
-using Core.Validation;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
-using Web.Api.Filters;
-
-/// <summary>
-/// The startup class for configuring services and the app's request pipeline.
-/// </summary>
-public class Startup
+namespace Web.Api
 {
-    private readonly IWebHostEnvironment _env;
+    using Core.Configuration;
+    using Core.External;
+    using Core.External.Amadeus;
+    using Core.External.Amadeus.Testing;
+    using Core.Infrastructure;
+    using Core.Interfaces;
+    using Core.Validation;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Caching.Memory;
+    using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Options;
+    using Scrutor;
+    using Web.Api.Filters;
+    using Web.Api.Middleware;
+    using Web.Api.Services;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Startup"/> class.
+    /// The startup class for configuring services and the app's request pipeline.
     /// </summary>
-    /// <param name="configuration">The congifuration.</param>
-    /// <param name="env">The environment.</param>
-    public Startup(IConfiguration configuration, IWebHostEnvironment env)
+    public class Startup
     {
-        Configuration = configuration;
-        _env = env;
-    }
+        private readonly IWebHostEnvironment _env;
 
-    private IConfiguration Configuration { get; }
-
-    // Configure services here
-    private void ConfigureServices(IServiceCollection services)
-    {
-        // Add CORS support
-        services.AddCors(options =>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Startup"/> class.
+        /// </summary>
+        /// <param name="configuration">The congifuration.</param>
+        /// <param name="env">The environment.</param>
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
-            options.AddDefaultPolicy(builder =>
-            {
-                builder.AllowAnyOrigin()
-                       .AllowAnyMethod()
-                       .AllowAnyHeader();
-            });
-        });
-
-        // Add controllers (no route prefix needed as controllers already have the /api/v1 prefix)
-        services.AddControllers(options =>
-        {
-            // Add region validation filter to all actions
-            options.Filters.Add<ValidateRegionFilter>();
-        });
-
-        // Register validation services
-        services.AddSingleton<IRegionValidator, RegionValidator>();
-
-        // Configure resilience options
-        var resilienceOptions = new ResilienceOptions();
-        Configuration.GetSection("Resilience").Bind(resilienceOptions);
-        services.Configure<ResilienceOptions>(Configuration.GetSection("Resilience"));
-
-        // Swagger/OpenAPI
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-            {
-                Title = "SeeYouThere API",
-                Version = "v1",
-                Description = "API to find the cheapest common destination for multiple travelers.",
-            });
-        });
-
-        services.Configure<AmadeusOptions>(
-            Configuration.GetSection("FlightSearch:Amadeus"));
-
-        if (_env.IsDevelopment() && Configuration.GetValue("UseTestFlightData", false))
-        {
-            services.AddSingleton<IFlightSearchClient, TestFlightSearchClient>();
-        }
-        else
-        {
-            // Use resilient HTTP client for Amadeus API
-            services.AddResilientAmadeusClient(resilienceOptions);
-        }
-    }
-
-    private void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-    {
-        if (env.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-            app.UseSwagger(c =>
-            {
-                c.RouteTemplate = "api/v1/swagger/{documentName}/swagger.json";
-            });
-
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/api/v1/swagger/v1/swagger.json", "SeeYouThere API v1");
-                c.RoutePrefix = "api/v1/swagger";
-            });
-
-            app.UseSwagger(c =>
-            {
-                c.RouteTemplate = "swagger/{documentName}/swagger.json";
-            });
-
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "SeeYouThere API v1");
-                c.RoutePrefix = "swagger";
-            });
+            Configuration = configuration;
+            _env = env;
         }
 
-        app.UseCors();
+        private IConfiguration Configuration { get; }
 
-        app.UseHttpsRedirection();
-
-        app.UseRouting();
-
-        app.UseAuthorization();
-
-        app.UseEndpoints(endpoints =>
+        /// <summary>
+        /// Configures the services.
+        /// </summary>
+        /// <param name="services">The services.</param>
+        public void ConfigureServices(IServiceCollection services)
         {
-            endpoints.MapControllers();
-        });
+            // Add CORS support
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader();
+                });
+            });
+
+            // Add controllers (no route prefix needed as controllers already have the /api/v1 prefix)
+            services.AddControllers(options =>
+            {
+                // Add region validation filter to all actions
+                options.Filters.Add<ValidateRegionFilter>();
+            });
+
+            // Register validation services
+            services.AddSingleton<IRegionValidator, RegionValidator>();
+
+            // Configure resilience options
+            var resilienceOptions = new ResilienceOptions();
+            Configuration.GetSection("Resilience").Bind(resilienceOptions);
+            services.Configure<ResilienceOptions>(Configuration.GetSection("Resilience"));
+
+            // Configure cache options
+            services.Configure<CacheOptions>(Configuration.GetSection("Cache"));
+
+            // Add memory cache
+            services.AddMemoryCache();
+
+            // Add HTTP context accessor for accessing Cache-Control headers
+            services.AddHttpContextAccessor();
+
+            // Register the cache headers service
+            services.AddScoped<ICacheHeadersService, HttpContextCacheHeadersService>();
+
+            // Swagger/OpenAPI
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                {
+                    Title = "SeeYouThere API",
+                    Version = "v1",
+                    Description = "API to find the cheapest common destination for multiple travelers.",
+                });
+            });
+
+            services.Configure<AmadeusOptions>(
+                Configuration.GetSection("FlightSearch:Amadeus"));
+
+            if (_env.IsDevelopment() && Configuration.GetValue("UseTestFlightData", false))
+            {
+                // Register the test flight search client
+                services.AddSingleton<IFlightSearchClient, TestFlightSearchClient>();
+            }
+            else
+            {
+                // Use resilient HTTP client for Amadeus API
+                services.AddResilientAmadeusClient(resilienceOptions);
+            }
+
+            // Decorate the IFlightSearchClient with caching functionality
+            services.Decorate<IFlightSearchClient>((inner, provider) =>
+            {
+                return new CachedFlightSearchClient(
+                    inner,
+                    provider.GetRequiredService<IMemoryCache>(),
+                    provider.GetRequiredService<IOptions<CacheOptions>>(),
+                    provider.GetRequiredService<ICacheHeadersService>(),
+                    provider.GetRequiredService<ILogger<CachedFlightSearchClient>>());
+            });
+        }
+
+        /// <summary>
+        /// Configures the HTTP request pipeline.
+        /// </summary>
+        /// <param name="app">The application builder.</param>
+        /// <param name="env">The environment.</param>
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseSwagger(c =>
+                {
+                    c.RouteTemplate = "api/v1/swagger/{documentName}/swagger.json";
+                });
+
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/api/v1/swagger/v1/swagger.json", "SeeYouThere API v1");
+                    c.RoutePrefix = "api/v1/swagger";
+                });
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseMiddleware<CorrelationIdMiddleware>();
+
+            app.UseHttpCacheHeaders();
+
+            app.UseRouting();
+            app.UseCors();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+        }
     }
 }
