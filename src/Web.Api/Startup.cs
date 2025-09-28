@@ -203,7 +203,7 @@ namespace Web.Api
 
             app.UseHttpsRedirection();
 
-            app.UseMiddleware<CorrelationIdMiddleware>();
+            app.UseCorrelationId();
 
             // Add rate limiting middleware early in the pipeline
             app.UseApiRateLimiting();
