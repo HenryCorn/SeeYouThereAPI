@@ -36,63 +36,165 @@ public class DestinationsController : DestinationsApiController
     {
         try
         {
-            _logger.LogInformation("Finding cheapest destinations for {OriginsCount} origins", cheapestDestinationRequest.Origins.Count);
-
-            var allResults = new Dictionary<string, List<FlightSearchResult>>();
-            foreach (var origin in cheapestDestinationRequest.Origins)
+            _logger.LogInformation("Searching for cheapest destination with {@RequestParameters}", new
             {
-                var searchRequest = new FlightSearchRequest
-                {
-                    Origin = origin,
-                    DepartureDate = new DateTime(
-                        cheapestDestinationRequest.Date.Year,
-                        cheapestDestinationRequest.Date.Month,
-                        cheapestDestinationRequest.Date.Day),
-                    Currency = "USD",
-                };
+                OriginCount = cheapestDestinationRequest.Origins.Count,
+                cheapestDestinationRequest.Origins,
+                cheapestDestinationRequest.Date,
+                cheapestDestinationRequest.RegionType,
+                RegionsCount = cheapestDestinationRequest.Regions.Count,
+            });
 
-                switch (cheapestDestinationRequest.RegionType)
-                {
-                    case CheapestDestinationRequest.RegionTypeEnum.ContinentEnum:
-                        searchRequest.ContinentFilter = cheapestDestinationRequest.Regions?.FirstOrDefault();
-                        break;
-                    case CheapestDestinationRequest.RegionTypeEnum.CountryEnum:
-                        searchRequest.CountryFilter = cheapestDestinationRequest.Regions?.FirstOrDefault();
-                        break;
-                    case CheapestDestinationRequest.RegionTypeEnum.CitiesEnum:
-                        searchRequest.DestinationListFilter = cheapestDestinationRequest.Regions;
-                        break;
-                }
-
-                var results = _flightSearchClient.GetCheapestDestinationsAsync(searchRequest).Result;
-                allResults[origin] = results.ToList();
+            if (!cheapestDestinationRequest.Origins.Any())
+            {
+                _logger.LogWarning("Request validation failed: No origins specified");
+                return BadRequest("At least one origin must be specified");
             }
 
+            var allResults = new Dictionary<string, List<FlightSearchResult>>();
+            var searchStart = DateTime.UtcNow;
+
+            foreach (var origin in cheapestDestinationRequest.Origins)
+            {
+                var originProcessStart = DateTime.UtcNow;
+                _logger.LogDebug("Processing origin {Origin}", origin);
+
+                try
+                {
+                    var searchRequest = CreateSearchRequest(origin, cheapestDestinationRequest);
+
+                    _logger.LogDebug("Calling flight search service for origin {Origin}", origin);
+                    var searchStartTime = DateTime.UtcNow;
+                    var results = _flightSearchClient.GetCheapestDestinationsAsync(searchRequest).Result;
+                    var searchDuration = DateTime.UtcNow - searchStartTime;
+
+                    var flightSearchResults = results.ToList();
+                    _logger.LogInformation(
+                        "Retrieved {ResultCount} flight options for {Origin} in {DurationMs}ms",
+                        flightSearchResults.Count(),
+                        origin,
+                        searchDuration.TotalMilliseconds);
+
+                    allResults[origin] = flightSearchResults.ToList();
+                }
+                catch (Exception ex)
+                {
+                    if (ex is AggregateException aggregateEx && aggregateEx.InnerExceptions.Count == 1)
+                    {
+                        _logger.LogError(
+                            aggregateEx.InnerException,
+                            "Failed to process origin {Origin}: {ErrorType} - {ErrorMessage}",
+                            origin,
+                            aggregateEx.InnerException!.GetType().Name,
+                            aggregateEx.InnerException.Message);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            ex,
+                            "Failed to process origin {Origin}: {ErrorType} - {ErrorMessage}",
+                            origin,
+                            ex.GetType().Name,
+                            ex.Message);
+                    }
+                }
+
+                var originProcessDuration = DateTime.UtcNow - originProcessStart;
+                _logger.LogDebug("Completed processing origin {Origin} in {DurationMs}ms", origin, originProcessDuration.TotalMilliseconds);
+            }
+
+            var searchDurationTotal = DateTime.UtcNow - searchStart;
+            _logger.LogInformation(
+                "Completed searching {OriginCount} origins in {DurationMs}ms",
+                cheapestDestinationRequest.Origins.Count,
+                searchDurationTotal.TotalMilliseconds);
+
+            if (!allResults.Any())
+            {
+                _logger.LogWarning(
+                    "No flight results found for any of the {OriginCount} origins",
+                    cheapestDestinationRequest.Origins.Count);
+                return NotFound("No flight results could be found for any origin");
+            }
+
+            _logger.LogDebug("Finding common destinations across {OriginCount} origins", allResults.Count);
             var commonDestinations = FindCommonDestinations(allResults);
 
             if (!commonDestinations.Any())
             {
+                _logger.LogInformation("No common destinations found across origins {@Origins}", allResults.Keys);
                 return NotFound("No common destination found for all specified origins");
             }
 
             var cheapestCommon = commonDestinations.OrderBy(d => d.TotalPrice).First();
 
+            _logger.LogInformation("Found cheapest common destination {@Destination}", new
+            {
+                City = cheapestCommon.DestinationCity,
+                Country = cheapestCommon.DestinationCountry,
+                cheapestCommon.TotalPrice,
+                cheapestCommon.Currency,
+                OriginCount = cheapestCommon.PerOriginPrices.Count,
+            });
+
             var response = new CheapestDestinationResponse
             {
                 DestinationCity = cheapestCommon.DestinationCity,
-                DestinationCountry = cheapestCommon.DestinationCountry,
+                DestinationCountry = cheapestCommon.DestinationCountry!,
                 TotalPrice = (float)cheapestCommon.TotalPrice,
                 Currency = cheapestCommon.Currency,
                 PerOriginPrices = cheapestCommon.PerOriginPrices
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
             };
+
+            _logger.LogInformation("Returning successful response for {Destination}", response.DestinationCity);
             return Ok(response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error finding cheapest destinations: {Message}", ex.Message);
-            return StatusCode(500, "An error occurred while processing your request");
+            _logger.LogError(ex, "Unhandled exception in FindCheapestDestination: {ErrorType}", ex.GetType().Name);
+            return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
         }
+    }
+
+    private FlightSearchRequest CreateSearchRequest(string origin, CheapestDestinationRequest cheapestDestinationRequest)
+    {
+        var searchRequest = new FlightSearchRequest
+        {
+            Origin = origin,
+            DepartureDate = new DateTime(
+                cheapestDestinationRequest.Date.Year,
+                cheapestDestinationRequest.Date.Month,
+                cheapestDestinationRequest.Date.Day),
+            Currency = "USD",
+        };
+
+        _logger.LogDebug("Configuring search with {RegionType} filter", cheapestDestinationRequest.RegionType);
+
+        // Handle the regionType according to our updated OpenAPI spec
+        switch (cheapestDestinationRequest.RegionType)
+        {
+            case CheapestDestinationRequest.RegionTypeEnum.ContinentEnum:
+                var continentFilter = cheapestDestinationRequest.Regions.FirstOrDefault();
+                _logger.LogDebug("Using continent filter: {ContinentFilter}", continentFilter);
+                searchRequest.ContinentFilter = continentFilter;
+                break;
+            case CheapestDestinationRequest.RegionTypeEnum.CountryEnum:
+                var countryFilter = cheapestDestinationRequest.Regions.FirstOrDefault();
+                _logger.LogDebug("Using country filter: {CountryFilter}", countryFilter);
+                searchRequest.CountryFilter = countryFilter;
+                break;
+            case CheapestDestinationRequest.RegionTypeEnum.CitiesEnum:
+                var citiesCount = cheapestDestinationRequest.Regions.Count;
+                _logger.LogDebug("Using cities filter with {CitiesCount} cities", citiesCount);
+                searchRequest.DestinationListFilter = cheapestDestinationRequest.Regions;
+                break;
+            default:
+                _logger.LogWarning("Unknown region type: {RegionType}", cheapestDestinationRequest.RegionType);
+                break;
+        }
+
+        return searchRequest;
     }
 
     private List<CommonDestination> FindCommonDestinations(Dictionary<string, List<FlightSearchResult>> allResults)
