@@ -8,6 +8,7 @@ using Core.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Polly;
+using Polly.Bulkhead;
 using Polly.CircuitBreaker;
 using Polly.Extensions.Http;
 using Polly.Timeout;
@@ -35,7 +36,9 @@ namespace Core.Infrastructure
                 .AddPolicyHandler((serviceProvider, request) =>
                     GetCircuitBreakerPolicy(serviceProvider, options))
                 .AddPolicyHandler((serviceProvider, request) =>
-                    GetTimeoutPolicy(options));
+                    GetTimeoutPolicy(options))
+                .AddPolicyHandler((serviceProvider, request) =>
+                    GetBulkheadPolicy(serviceProvider, options));
 
             return services;
         }
@@ -99,6 +102,29 @@ namespace Core.Infrastructure
         {
             return Policy.TimeoutAsync<HttpResponseMessage>(
                 TimeSpan.FromSeconds(options.TimeoutSeconds));
+        }
+
+        /// <summary>
+        /// Creates a bulkhead policy to limit concurrent requests to the provider.
+        /// </summary>
+        /// <param name="serviceProvider">The service provider.</param>
+        /// <param name="options">The resilience options.</param>
+        /// <returns>A bulkhead policy to limit concurrent requests.</returns>
+        private static IAsyncPolicy<HttpResponseMessage> GetBulkheadPolicy(
+            IServiceProvider serviceProvider,
+            ResilienceOptions options)
+        {
+            var logger = serviceProvider.GetRequiredService<ILogger<AmadeusFlightSearchClient>>();
+
+            return Policy.BulkheadAsync<HttpResponseMessage>(
+                maxParallelization: options.MaxConcurrentRequests,
+                maxQueuingActions: options.MaxQueuedRequests,
+                onBulkheadRejectedAsync: async context =>
+                {
+                    logger.LogWarning(
+                        "Bulkhead rejection - max concurrent requests limit reached. Request rejected.");
+                    await Task.CompletedTask;
+                });
         }
 
         private static string GetCorrelationId(HttpRequestMessage request)

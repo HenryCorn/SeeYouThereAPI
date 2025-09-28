@@ -12,11 +12,11 @@ namespace Core.External.Amadeus
     /// <summary>
     /// Implementation of IFlightSearchClient using the Amadeus API.
     /// </summary>
-    public class AmadeusFlightSearchClient : IFlightSearchClient
+    public class AmadeusFlightSearchClient : BaseFlightSearchClient
     {
         private readonly HttpClient _httpClient;
         private readonly AmadeusOptions _options;
-        private readonly ILogger<AmadeusFlightSearchClient> _logger;
+        private new readonly ILogger<AmadeusFlightSearchClient> _logger;
         private string _accessToken = null!;
         private DateTime _tokenExpiry = DateTime.MinValue;
 
@@ -30,10 +30,11 @@ namespace Core.External.Amadeus
             HttpClient httpClient,
             IOptions<AmadeusOptions> options,
             ILogger<AmadeusFlightSearchClient> logger)
+            : base(logger)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger;
 
             // Configure the HttpClient
             _httpClient.BaseAddress = new Uri(_options.BaseUrl);
@@ -41,7 +42,9 @@ namespace Core.External.Amadeus
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<FlightSearchResult>> SearchFlightsAsync(FlightSearchRequest request)
+        public override async Task<IEnumerable<FlightSearchResult>> SearchFlightsAsync(
+            FlightSearchRequest request,
+            CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(request);
 
@@ -53,7 +56,7 @@ namespace Core.External.Amadeus
                 try
                 {
                     _logger.LogInformation("Ensuring valid access token for Amadeus API");
-                    await EnsureValidAccessTokenAsync();
+                    await EnsureValidAccessTokenAsync(cancellationToken);
                 }
                 catch (Exception tokenEx)
                 {
@@ -66,31 +69,31 @@ namespace Core.External.Amadeus
 
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, searchUrl);
                 requestMessage.Headers.Add("Authorization", $"Bearer {_accessToken}");
-                
+
                 _logger.LogInformation("Sending request to Amadeus API");
-                var response = await _httpClient.SendAsync(requestMessage);
-                
+                var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
                     _logger.LogError("Amadeus API returned error: Status {Status}, Content: {Content}",
                         (int)response.StatusCode, errorContent);
                     throw new Exception($"Flight search provider returned error {(int)response.StatusCode}: {errorContent}");
                 }
-                
+
                 _logger.LogInformation("Received successful response from Amadeus API");
-                
-                string responseContent = await response.Content.ReadAsStringAsync();
+
+                string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogInformation("Response content: {Content}", responseContent);
-                
+
                 var amadeusResponse = JsonSerializer.Deserialize<AmadeusFlightOffersResponse>(responseContent);
-                
+
                 if (amadeusResponse == null)
                 {
                     _logger.LogError("Failed to deserialize Amadeus API response");
                     throw new Exception("Failed to process flight search results");
                 }
-                
+
                 var results = MapFromAmadeusResponse(amadeusResponse, request.Currency);
                 var flightSearchResults = results.ToList();
                 _logger.LogInformation("Mapped {Count} flight search results", flightSearchResults.Count());
@@ -107,6 +110,11 @@ namespace Core.External.Amadeus
                 _logger.LogError(ex, "Error deserializing Amadeus API response: {Message}", ex.Message);
                 throw new Exception("Error processing flight search results", ex);
             }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("Flight search was cancelled");
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error in flight search: {Message}", ex.Message);
@@ -115,19 +123,21 @@ namespace Core.External.Amadeus
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<FlightSearchResult>> GetCheapestDestinationsAsync(FlightSearchRequest request)
+        public override async Task<IEnumerable<FlightSearchResult>> GetCheapestDestinationsAsync(
+            FlightSearchRequest request,
+            CancellationToken cancellationToken = default)
         {
-            var results = await SearchFlightsAsync(request);
+            var results = await SearchFlightsAsync(request, cancellationToken);
             return results.OrderBy(r => r.Price);
         }
 
-        private async Task EnsureValidAccessTokenAsync()
+        private async Task EnsureValidAccessTokenAsync(CancellationToken cancellationToken = default)
         {
             // Check if we need a new token
             if (string.IsNullOrEmpty(_accessToken) || DateTime.UtcNow >= _tokenExpiry)
             {
                 _logger.LogInformation("Getting new Amadeus access token");
-                
+
                 var tokenUrl = "/v1/security/oauth2/token";
                 var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
                 {
@@ -138,27 +148,27 @@ namespace Core.External.Amadeus
 
                 try
                 {
-                    var tokenResponse = await _httpClient.PostAsync(tokenUrl, tokenRequest);
-                    
+                    var tokenResponse = await _httpClient.PostAsync(tokenUrl, tokenRequest, cancellationToken);
+
                     if (!tokenResponse.IsSuccessStatusCode)
                     {
-                        var errorContent = await tokenResponse.Content.ReadAsStringAsync();
-                        _logger.LogError("Failed to obtain token: Status {Status}, Content: {Content}", 
+                        var errorContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+                        _logger.LogError("Failed to obtain token: Status {Status}, Content: {Content}",
                             (int)tokenResponse.StatusCode, errorContent);
                         throw new Exception($"Failed to authenticate: {errorContent}");
                     }
-                    
-                    var responseContent = await tokenResponse.Content.ReadAsStringAsync();
+
+                    var responseContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
                     _logger.LogInformation("Token response: {Response}", responseContent);
-                    
+
                     var tokenResult = JsonSerializer.Deserialize<AmadeusTokenResponse>(responseContent);
-                    
+
                     if (tokenResult == null || string.IsNullOrEmpty(tokenResult.AccessToken))
                         throw new Exception("Failed to obtain access token from Amadeus");
 
                     _accessToken = tokenResult.AccessToken;
                     _tokenExpiry = DateTime.UtcNow.AddSeconds(tokenResult.ExpiresIn - 60); // Buffer of 60 seconds
-                    
+
                     _logger.LogInformation("Successfully obtained Amadeus access token, expires at {Expiry}", _tokenExpiry);
                 }
                 catch (Exception ex)

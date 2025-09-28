@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Org.OpenAPITools.Models;
+using System.Threading;
 using Web.Api.Controllers;
 
 namespace Web.Api.Tests.Controllers
@@ -32,13 +33,17 @@ namespace Web.Api.Tests.Controllers
                 Regions = ["EU"]
             };
 
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(r => r.Origin == "JFK")))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "JFK"),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "JFK", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 300m, Currency = "USD" }
                 });
 
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(r => r.Origin == "LHR")))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "LHR"),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "LHR", DestinationCityCode = "MAD", DestinationCountryCode = "ES", Price = 150m, Currency = "USD" }
@@ -60,13 +65,17 @@ namespace Web.Api.Tests.Controllers
                 RegionType = CheapestDestinationRequest.RegionTypeEnum.ContinentEnum,
                 Regions = ["EU"]
             };
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(r => r.Origin == "JFK")))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "JFK"),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "JFK", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 300m, Currency = "USD" },
                     new() { Origin = "JFK", DestinationCityCode = "ROM", DestinationCountryCode = "IT", Price = 350m, Currency = "USD" }
                 });
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(r => r.Origin == "LHR")))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "LHR"),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "LHR", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 150m, Currency = "USD" },
@@ -98,13 +107,17 @@ namespace Web.Api.Tests.Controllers
                 RegionType = CheapestDestinationRequest.RegionTypeEnum.ContinentEnum,
                 Regions = ["EU"]
             };
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(r => r.Origin == "JFK")))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "JFK"),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "JFK", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 300m, Currency = "USD" },
                     new() { Origin = "JFK", DestinationCityCode = "ROM", DestinationCountryCode = "IT", Price = 250m, Currency = "USD" }
                 });
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(r => r.Origin == "LHR")))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "LHR"),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "LHR", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 150m, Currency = "USD" },
@@ -132,8 +145,9 @@ namespace Web.Api.Tests.Controllers
                 RegionType = CheapestDestinationRequest.RegionTypeEnum.CountryEnum,
                 Regions = ["FR"]
             };
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(
-                r => r.Origin == "JFK" && r.CountryFilter == "FR")))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "JFK" && r.CountryFilter == "FR"),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "JFK", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 300m, Currency = "USD" }
@@ -142,8 +156,9 @@ namespace Web.Api.Tests.Controllers
             var result = _controller.FindCheapestDestination(request);
 
             result.Should().BeOfType<OkObjectResult>();
-            _mockFlightSearchClient.Verify(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(
-                r => r.CountryFilter == "FR")), Times.Once);
+            _mockFlightSearchClient.Verify(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.CountryFilter == "FR"),
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -157,8 +172,9 @@ namespace Web.Api.Tests.Controllers
                 RegionType = CheapestDestinationRequest.RegionTypeEnum.CitiesEnum,
                 Regions = cities
             };
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(
-                r => r.Origin == "JFK" && r.DestinationListFilter == cities)))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.Origin == "JFK" && r.DestinationListFilter == cities),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<FlightSearchResult>
                 {
                     new() { Origin = "JFK", DestinationCityCode = "PAR", DestinationCountryCode = "FR", Price = 300m, Currency = "USD" }
@@ -167,8 +183,9 @@ namespace Web.Api.Tests.Controllers
             var result = _controller.FindCheapestDestination(request);
 
             result.Should().BeOfType<OkObjectResult>();
-            _mockFlightSearchClient.Verify(m => m.GetCheapestDestinationsAsync(It.Is<FlightSearchRequest>(
-                r => r.DestinationListFilter == cities)), Times.Once);
+            _mockFlightSearchClient.Verify(m => m.GetCheapestDestinationsAsync(
+                It.Is<FlightSearchRequest>(r => r.DestinationListFilter == cities),
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -185,7 +202,9 @@ namespace Web.Api.Tests.Controllers
             var innerException = new Exception("Test exception");
             var aggregateException = new AggregateException(innerException);
 
-            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(It.IsAny<FlightSearchRequest>()))
+            _mockFlightSearchClient.Setup(m => m.GetCheapestDestinationsAsync(
+                It.IsAny<FlightSearchRequest>(),
+                It.IsAny<CancellationToken>()))
                 .ThrowsAsync(innerException);
 
             var result = _controller.FindCheapestDestination(request);

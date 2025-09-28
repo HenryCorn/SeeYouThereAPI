@@ -1,26 +1,30 @@
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace Core.External.Amadeus.Testing
 {
     /// <summary>
     /// Implementation of IFlightSearchClient that provides test data for development and testing.
     /// </summary>
-    public class TestFlightSearchClient : IFlightSearchClient
+    public class TestFlightSearchClient : BaseFlightSearchClient
     {
-        private readonly ILogger<TestFlightSearchClient> _logger;
+        private new readonly ILogger<TestFlightSearchClient> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TestFlightSearchClient"/> class.
         /// </summary>
         public TestFlightSearchClient(ILogger<TestFlightSearchClient> logger)
+            : base(logger)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger;
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<FlightSearchResult>> SearchFlightsAsync(FlightSearchRequest request)
+        public override Task<IEnumerable<FlightSearchResult>> SearchFlightsAsync(
+            FlightSearchRequest request,
+            CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Using test flight search client for origin {Origin}", request.Origin);
 
@@ -30,13 +34,21 @@ namespace Core.External.Amadeus.Testing
             if (string.IsNullOrEmpty(request.Origin))
                 throw new ArgumentException("Origin is required", nameof(request));
 
+            // Check if the operation has been cancelled
+            cancellationToken.ThrowIfCancellationRequested();
+
             var results = GenerateTestResults(request);
             return Task.FromResult(results);
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<FlightSearchResult>> GetCheapestDestinationsAsync(FlightSearchRequest request)
+        public override Task<IEnumerable<FlightSearchResult>> GetCheapestDestinationsAsync(
+            FlightSearchRequest request,
+            CancellationToken cancellationToken = default)
         {
+            // Check if the operation has been cancelled
+            cancellationToken.ThrowIfCancellationRequested();
+
             var results = GenerateTestResults(request);
             return Task.FromResult<IEnumerable<FlightSearchResult>>(results.OrderBy(r => r.Price));
         }

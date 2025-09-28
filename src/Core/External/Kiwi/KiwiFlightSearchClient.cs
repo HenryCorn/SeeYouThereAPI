@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Threading;
 using System.Web;
 
 namespace Core.External.Kiwi
@@ -13,11 +14,11 @@ namespace Core.External.Kiwi
     /// <summary>
     /// Implementation of IFlightSearchClient that uses the Kiwi API.
     /// </summary>
-    public class KiwiFlightSearchClient : IFlightSearchClient
+    public class KiwiFlightSearchClient : BaseFlightSearchClient
     {
         private readonly HttpClient _httpClient;
         private readonly KiwiFlightSearchOptions _options;
-        private readonly ILogger<KiwiFlightSearchClient> _logger;
+        private new readonly ILogger<KiwiFlightSearchClient> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KiwiFlightSearchClient"/> class.
@@ -29,10 +30,11 @@ namespace Core.External.Kiwi
             HttpClient httpClient,
             IOptions<KiwiFlightSearchOptions> options,
             ILogger<KiwiFlightSearchClient> logger)
+            : base(logger)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger;
 
             // Configure the HttpClient
             _httpClient.BaseAddress = new Uri(_options.BaseUrl);
@@ -41,7 +43,9 @@ namespace Core.External.Kiwi
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<FlightSearchResult>> SearchFlightsAsync(FlightSearchRequest request)
+        public override async Task<IEnumerable<FlightSearchResult>> SearchFlightsAsync(
+            FlightSearchRequest request,
+            CancellationToken cancellationToken = default)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
@@ -56,11 +60,11 @@ namespace Core.External.Kiwi
 
                 _logger.LogInformation("Searching flights from {Origin} with Kiwi API", request.Origin);
 
-                var response = await _httpClient.GetAsync($"/v2/search?{queryParams}");
+                var response = await _httpClient.GetAsync($"/v2/search?{queryParams}", cancellationToken);
 
                 response.EnsureSuccessStatusCode();
 
-                var kiwiResponse = await response.Content.ReadFromJsonAsync<KiwiSearchResponse>();
+                var kiwiResponse = await response.Content.ReadFromJsonAsync<KiwiSearchResponse>(cancellationToken: cancellationToken);
 
                 return MapFromKiwiResponse(kiwiResponse);
             }
@@ -74,6 +78,11 @@ namespace Core.External.Kiwi
                 _logger.LogError(ex, "Error deserializing Kiwi API response: {Message}", ex.Message);
                 throw new Exception("Error processing flight search results", ex);
             }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("Flight search was cancelled");
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error in flight search: {Message}", ex.Message);
@@ -82,12 +91,14 @@ namespace Core.External.Kiwi
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<FlightSearchResult>> GetCheapestDestinationsAsync(FlightSearchRequest request)
+        public override async Task<IEnumerable<FlightSearchResult>> GetCheapestDestinationsAsync(
+            FlightSearchRequest request,
+            CancellationToken cancellationToken = default)
         {
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
 
-            var results = await SearchFlightsAsync(request);
+            var results = await SearchFlightsAsync(request, cancellationToken);
             return results.OrderBy(r => r.Price);
         }
 
@@ -95,7 +106,7 @@ namespace Core.External.Kiwi
         {
             // Format dates for Kiwi API (dd/MM/yyyy)
             string departureDate = request.DepartureDate.ToString("dd/MM/yyyy");
-            
+
             // Initialize flyTo with any specific filters
             string flyTo = string.Empty;
 
@@ -115,7 +126,7 @@ namespace Core.External.Kiwi
             {
                 flyTo = string.Join(",", request.DestinationListFilter);
             }
-            
+
             // If no filter is specified, search everywhere
             if (string.IsNullOrEmpty(flyTo))
             {
@@ -128,8 +139,8 @@ namespace Core.External.Kiwi
                 FlyTo = flyTo,
                 DateFrom = departureDate,
                 DateTo = departureDate, // Same date for now (could expand for date range)
-                Currency = !string.IsNullOrEmpty(request.Currency) ? 
-                           request.Currency : 
+                Currency = !string.IsNullOrEmpty(request.Currency) ?
+                           request.Currency :
                            _options.DefaultCurrency
             };
 
@@ -162,7 +173,7 @@ namespace Core.External.Kiwi
         private string BuildQueryString(KiwiSearchRequest request)
         {
             var query = HttpUtility.ParseQueryString(string.Empty);
-            
+
             // Add all properties with JsonPropertyName attributes
             var properties = typeof(KiwiSearchRequest).GetProperties();
             foreach (var prop in properties)
@@ -172,14 +183,14 @@ namespace Core.External.Kiwi
                 {
                     var jsonPropNameAttr = prop.GetCustomAttributes(typeof(System.Text.Json.Serialization.JsonPropertyNameAttribute), false)
                         .FirstOrDefault() as System.Text.Json.Serialization.JsonPropertyNameAttribute;
-                    
+
                     if (jsonPropNameAttr != null)
                     {
                         query[jsonPropNameAttr.Name] = value.ToString();
                     }
                 }
             }
-            
+
             return query.ToString();
         }
     }

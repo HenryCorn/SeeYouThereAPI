@@ -29,5 +29,16 @@ namespace Core.Configuration
         /// Gets or sets the duration of the circuit break in seconds.
         /// </summary>
         public int CircuitBreakerDurationSeconds { get; set; } = 30;
+
+        /// <summary>
+        /// Gets or sets the maximum number of concurrent requests allowed to the provider.
+        /// </summary>
+        public int MaxConcurrentRequests { get; set; } = 10;
+
+        /// <summary>
+        /// Gets or sets the maximum number of requests that can be queued when
+        /// the maximum concurrent requests limit is reached.
+        /// </summary>
+        public int MaxQueuedRequests { get; set; } = 20;
     }
 }
