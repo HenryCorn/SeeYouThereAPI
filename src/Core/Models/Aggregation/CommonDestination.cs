@@ -23,6 +23,12 @@ namespace Core.Models.Aggregation
         public decimal TotalPrice { get; set; }
 
         /// <summary>
+        /// Gets or sets the median price across all origins.
+        /// Used for tie-breaking when total prices are equal.
+        /// </summary>
+        public decimal MedianPrice { get; set; }
+
+        /// <summary>
         /// Gets or sets the currency of the prices.
         /// </summary>
         public string Currency { get; set; }

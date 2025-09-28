@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -42,9 +43,93 @@ namespace Core.Models.Aggregation
         }
 
         /// <summary>
+        /// Calculates the optimal common destination across all origins based on total price and tie-breaking rules.
+        /// </summary>
+        /// <returns>The best common destination based on specified rules.</returns>
+        public CommonDestination GetOptimalCommonDestination()
+        {
+            var commonDestinations = GetCommonDestinations();
+
+            if (!commonDestinations.Any())
+                return null;
+
+            var destinationTotals = new Dictionary<string, CommonDestination>();
+
+            // Calculate totals for each common destination
+            foreach (var destination in commonDestinations)
+            {
+                var commonDest = new CommonDestination
+                {
+                    DestinationCityCode = destination,
+                    Currency = Currency,
+                    PerOriginPrices = new Dictionary<string, decimal>()
+                };
+
+                decimal totalPrice = 0;
+                var allPrices = new List<decimal>();
+
+                foreach (var origin in OriginData)
+                {
+                    string originCode = origin.Key;
+                    var originPrices = origin.Value;
+
+                    if (originPrices.Destinations.TryGetValue(destination, out var destPrice))
+                    {
+                        commonDest.PerOriginPrices[originCode] = destPrice.Price;
+                        totalPrice += destPrice.Price;
+                        allPrices.Add(destPrice.Price);
+
+                        // Get the country code from the first available data point
+                        if (string.IsNullOrEmpty(commonDest.DestinationCountryCode))
+                        {
+                            commonDest.DestinationCountryCode = destPrice.DestinationCountryCode;
+                        }
+                    }
+                }
+
+                commonDest.TotalPrice = totalPrice;
+                commonDest.MedianPrice = CalculateMedian(allPrices);
+                destinationTotals[destination] = commonDest;
+            }
+
+            // Find the best destination using the specified rules:
+            // 1. Lowest total price
+            // 2. If tied, lowest median individual price
+            // 3. If still tied, lexicographic ordering of city code
+            return destinationTotals.Values
+                .OrderBy(d => d.TotalPrice)
+                .ThenBy(d => d.MedianPrice)
+                .ThenBy(d => d.DestinationCityCode)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Calculates the median value from a list of prices.
+        /// </summary>
+        /// <param name="prices">The list of prices.</param>
+        /// <returns>The median price.</returns>
+        private static decimal CalculateMedian(List<decimal> prices)
+        {
+            if (prices == null || !prices.Any())
+                return 0;
+
+            var sortedPrices = prices.OrderBy(p => p).ToList();
+
+            // For odd number of items, return the middle one
+            if (sortedPrices.Count % 2 == 1)
+            {
+                return sortedPrices[sortedPrices.Count / 2];
+            }
+
+            // For even number of items, return average of middle two
+            return (sortedPrices[(sortedPrices.Count / 2) - 1] + sortedPrices[sortedPrices.Count / 2]) / 2;
+        }
+
+        /// <summary>
         /// Calculates the cheapest common destination across all origins.
         /// </summary>
         /// <returns>The destination with the lowest total price across all origins.</returns>
+        [Obsolete("Use GetOptimalCommonDestination instead which supports proper tie-breaking.")]
         public CommonDestination GetCheapestCommonDestination()
         {
             var commonDestinations = GetCommonDestinations();
