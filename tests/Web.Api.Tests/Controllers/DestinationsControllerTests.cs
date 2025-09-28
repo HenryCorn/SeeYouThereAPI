@@ -190,7 +190,7 @@ namespace Web.Api.Tests.Controllers
 
             var result = _controller.FindCheapestDestination(request);
 
-            result.Should().BeOfType<ObjectResult>();
+            result.Should().BeOfType<NotFoundObjectResult>();
             var statusCodeResult = result as ObjectResult;
             statusCodeResult?.StatusCode.Should().Be(500);
         }
