@@ -36,6 +36,19 @@ public class DestinationsController : DestinationsApiController
     {
         try
         {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning(
+                    "Request validation failed: Invalid model state {@ValidationErrors}",
+                    ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)));
+
+                return BadRequest(new ValidationProblemDetails(ModelState)
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "One or more validation errors occurred",
+                });
+            }
+
             _logger.LogInformation("Searching for cheapest destination with {@RequestParameters}", new
             {
                 OriginCount = cheapestDestinationRequest.Origins.Count,
@@ -225,7 +238,7 @@ public class DestinationsController : DestinationsApiController
             };
 
             decimal totalPrice = 0;
-            string? destinationCountry = null;
+            string destinationCountry = null;
 
             foreach (var origin in allResults.Keys)
             {
@@ -251,7 +264,7 @@ public class DestinationsController : DestinationsApiController
     {
         public required string DestinationCity { get; set; }
 
-        public string? DestinationCountry { get; set; }
+        public string DestinationCountry { get; set; }
 
         public decimal TotalPrice { get; set; }
 
