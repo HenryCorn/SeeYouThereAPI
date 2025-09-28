@@ -11,16 +11,21 @@ namespace Web.Api
     using Core.Infrastructure;
     using Core.Interfaces;
     using Core.Validation;
+    using FluentValidation;
+    using FluentValidation.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.AspNetCore.Mvc.Infrastructure;
     using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Options;
     using Scrutor;
     using Web.Api.Filters;
+    using Web.Api.Infrastructure;
     using Web.Api.Middleware;
     using Web.Api.Services;
+    using Web.Api.Validators;
 
     /// <summary>
     /// The startup class for configuring services and the app's request pipeline.
@@ -59,15 +64,48 @@ namespace Web.Api
                 });
             });
 
-            // Add controllers (no route prefix needed as controllers already have the /api/v1 prefix)
+            // Add controllers with JSON options for problem details
             services.AddControllers(options =>
             {
                 // Add region validation filter to all actions
                 options.Filters.Add<ValidateRegionFilter>();
+                // Add problem details exception filter
+                options.Filters.Add<ProblemDetailsExceptionFilter>();
+            })
+            .AddNewtonsoftJson()
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.SuppressModelStateInvalidFilter = false;
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var problemDetailsFactory = context.HttpContext.RequestServices
+                        .GetRequiredService<ProblemDetailsFactory>();
+
+                    var validationProblemDetails = problemDetailsFactory
+                        .CreateValidationProblemDetails(
+                            context.HttpContext,
+                            context.ModelState,
+                            statusCode: StatusCodes.Status400BadRequest,
+                            title: "One or more validation errors occurred",
+                            type: "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+                            detail: "See the errors field for details.");
+
+                    return new BadRequestObjectResult(validationProblemDetails)
+                    {
+                        ContentTypes = { "application/problem+json" }
+                    };
+                };
             });
+
+            // Override the default problem details factory with our custom one
+            services.AddSingleton<ProblemDetailsFactory, ValidationProblemDetailsFactory>();
 
             // Register validation services
             services.AddSingleton<IRegionValidator, RegionValidator>();
+
+            // Add FluentValidation
+            services.AddFluentValidationAutoValidation();
+            services.AddValidatorsFromAssemblyContaining<CheapestDestinationRequestValidator>();
 
             // Configure resilience options
             var resilienceOptions = new ResilienceOptions();
@@ -96,6 +134,17 @@ namespace Web.Api
                     Version = "v1",
                     Description = "API to find the cheapest common destination for multiple travelers.",
                 });
+
+                // Include XML comments if they exist
+                var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFilename);
+                if (System.IO.File.Exists(xmlPath))
+                {
+                    c.IncludeXmlComments(xmlPath);
+                }
+
+                // Include schema annotations from FluentValidation
+                c.SchemaFilter<FluentValidationSchemaFilter>();
             });
 
             services.Configure<AmadeusOptions>(
