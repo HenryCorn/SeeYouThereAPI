@@ -1,38 +1,15 @@
 {
+  "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
   "settings": {
-    "analyzerSettings": {
-      "excludedFiles": [
-        "gen/**/*.cs",
-        "tools/**"
-      ]
-    },
-
     "documentationRules": {
-      "companyName": "SeeYouThere",
-      "documentExposedElements": true,
-      "documentInternalElements": false,
-      "documentPrivateElements": false,
-      "documentInterfaces": true,
-      "xmlHeader": false,
-      "fileNamingConvention": "stylecop"
+      "companyName": "SeeYouThereAPI"
     },
-
     "orderingRules": {
-      "usingDirectivesPlacement": "outsideNamespace",
-      "systemUsingDirectivesFirst": true,
-      "blankLinesBetweenUsingGroups": "require"
+      "usingDirectivesPlacement": "outsideNamespace"
     },
-    
-    "layoutRules": {
-      "newlineAtEndOfFile": "require"
-    },
-
-    "readabilityRules": {
-      "allowBuiltInTypeAliases": true
-    },
-
     "namingRules": {
-      "allowCommonHungarianPrefixes": true
+      "allowedHungarianPrefixes": []
     }
   }
 }
+

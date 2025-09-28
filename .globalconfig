@@ -1,0 +1,6 @@
+is_global = true
+
+# Exclude OpenAPI generated code from analysis
+[/Users/quique/repo/SeeYouThereAPI/gen/**/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
