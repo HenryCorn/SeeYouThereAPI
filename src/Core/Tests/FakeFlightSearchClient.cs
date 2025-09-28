@@ -20,7 +20,7 @@ public class FakeFlightSearchClient : BaseFlightSearchClient
     /// <summary>
     /// Initializes a new instance of the FakeFlightSearchClient class.
     /// </summary>
-    public FakeFlightSearchClient(ILogger<FakeFlightSearchClient> logger = null)
+    public FakeFlightSearchClient(ILogger<FakeFlightSearchClient>? logger = null)
         : base(logger ?? new Microsoft.Extensions.Logging.Abstractions.NullLogger<FakeFlightSearchClient>())
     {
         _mockResults = new List<FlightSearchResult>

@@ -64,6 +64,9 @@ namespace Web.Api
                 });
             });
 
+            // Add OpenTelemetry
+            services.AddOpenTelemetry(Configuration);
+
             // Add API rate limiting
             services.AddApiRateLimiting(options =>
             {
@@ -202,6 +205,9 @@ namespace Web.Api
             }
 
             app.UseHttpsRedirection();
+
+            // Add OpenTelemetry middleware early in the pipeline
+            app.UseOpenTelemetryMetrics();
 
             app.UseCorrelationId();
 
