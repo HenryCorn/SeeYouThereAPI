@@ -67,6 +67,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Tests", "tests\Core.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web.Api.Tests", "tests\Web.Api.Tests\Web.Api.Tests.csproj", "{EEFD7744-9C89-4F9F-88DD-4CC293FE5A3D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gcloud", "gcloud", "{ED453035-934B-4BC0-9B03-AC9E4AD93BED}"
+	ProjectSection(SolutionItems) = preProject
+		cloudbuild.yaml = cloudbuild.yaml
+		tools\gcp\setup-secrets.sh = tools\gcp\setup-secrets.sh
+		tools\gcp\setup.sh = tools\gcp\setup.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -134,5 +141,6 @@ Global
 		{D5F188A7-8572-4160-9F08-B6D658E89454} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{F3B1203C-E85A-4AAB-AA8F-15A9C1FFC8EA} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{EEFD7744-9C89-4F9F-88DD-4CC293FE5A3D} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{ED453035-934B-4BC0-9B03-AC9E4AD93BED} = {8EE4ED50-D138-4731-87C6-B051EFE34EEE}
 	EndGlobalSection
 EndGlobal

@@ -168,6 +168,26 @@ The Docker container includes:
 |----------|-------------|---------|
 | PORT | Port the API will listen on | 8080 |
 
+### Deployment Options
+
+#### Local Development
+
+#### Google Cloud Platform (GCP)
+
+SeeYouThereAPI can be deployed to Google Cloud Platform using Cloud Run, Cloud Build, and Artifact Registry.
+
+For complete instructions, see the [GCP Deployment Guide](docs/gcp-deployment.md).
+
+Quick start:
+```bash
+# Configure and run the GCP bootstrap script
+chmod +x tools/gcp/setup.sh
+./tools/gcp/setup.sh
+
+# Deploy using Cloud Build
+gcloud builds submit --config=cloudbuild.yaml
+```
+
 ## API Usage
 
 ### Multi-Origin Flight Search

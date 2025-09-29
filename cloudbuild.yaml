@@ -1,0 +1,42 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/seeyouthere-api:$SHORT_SHA', '.']
+    id: 'Build'
+
+  # Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/seeyouthere-api:$SHORT_SHA']
+    id: 'Push'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'seeyouthere-api'
+      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/seeyouthere-api:$SHORT_SHA'
+      - '--region=$_REGION'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=ASPNETCORE_ENVIRONMENT=$_ENVIRONMENT'
+      - '--set-secrets=AMADEUS_API_KEY=amadeus-api-key:latest,AMADEUS_API_SECRET=amadeus-api-secret:latest,KIWI_API_KEY=kiwi-api-key:latest'
+    id: 'Deploy'
+
+# Store images in Artifact Registry
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/seeyouthere-api:$SHORT_SHA'
+
+# Define substitution variables with default values
+substitutions:
+  _REGION: ''
+  _REPOSITORY: 'seeyouthere-docker'
+  _ENVIRONMENT: 'Production'
+
+# Timeout for the entire build process
+timeout: '1800s'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
