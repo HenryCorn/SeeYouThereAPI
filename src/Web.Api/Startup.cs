@@ -64,6 +64,9 @@ namespace Web.Api
                 });
             });
 
+            // Add health checks
+            services.AddHealthChecks();
+
             // Add OpenTelemetry
             services.AddOpenTelemetry(Configuration);
 
@@ -222,6 +225,8 @@ namespace Web.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                // Map health check endpoint
+                endpoints.MapHealthChecks("/health");
             });
         }
     }
