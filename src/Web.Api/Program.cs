@@ -63,12 +63,25 @@ public static class Program
                 webBuilder.UseStartup<Startup>();
                 webBuilder.ConfigureKestrel(options =>
                 {
-                    options.ListenLocalhost(5087, o => o.Protocols = HttpProtocols.Http1AndHttp2);
-                    options.ListenLocalhost(7180, o =>
+                    // Check if we're running in a container
+                    bool isRunningInContainer = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("PORT"));
+
+                    if (isRunningInContainer)
                     {
-                        o.Protocols = HttpProtocols.Http1AndHttp2;
-                        o.UseHttps();
-                    });
+                        // In container mode, use HTTP on the PORT environment variable
+                        int port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "8080");
+                        options.ListenAnyIP(port, o => o.Protocols = HttpProtocols.Http1AndHttp2);
+                    }
+                    else
+                    {
+                        // In development mode, use the original configuration
+                        options.ListenLocalhost(5087, o => o.Protocols = HttpProtocols.Http1AndHttp2);
+                        options.ListenLocalhost(7180, o =>
+                        {
+                            o.Protocols = HttpProtocols.Http1AndHttp2;
+                            o.UseHttps();
+                        });
+                    }
                 });
             });
 }

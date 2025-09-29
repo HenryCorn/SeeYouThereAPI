@@ -102,6 +102,7 @@ The API includes OpenTelemetry for comprehensive observability:
 
 - .NET 6.0 SDK or later
 - API keys for flight data providers (Amadeus, Kiwi, etc.)
+- Docker (optional, for containerized deployment)
 
 ### Configuration
 
@@ -139,6 +140,33 @@ dotnet build
 cd src/Web.Api
 dotnet run
 ```
+
+### Docker Deployment
+
+The application can be deployed as a containerized service using Docker:
+
+```bash
+# Build the Docker image
+docker build -t seeyouthere-api .
+
+# Run the container exposing port 8080
+docker run -p 8080:8080 seeyouthere-api
+
+# You can override the port if needed
+docker run -e PORT=5000 -p 5000:5000 seeyouthere-api
+```
+
+The Docker container includes:
+- ASP.NET 8 runtime (Alpine-based for minimal image size)
+- Non-root user execution for enhanced security
+- Health check endpoint at `/health`
+- Support for custom port configuration via the `PORT` environment variable
+
+#### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| PORT | Port the API will listen on | 8080 |
 
 ## API Usage
 
