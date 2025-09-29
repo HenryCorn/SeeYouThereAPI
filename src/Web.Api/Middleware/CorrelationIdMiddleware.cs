@@ -8,6 +8,7 @@ namespace Web.Api.Middleware
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Logging;
+    using Serilog.Context;
 
     /// <summary>
     /// Middleware for handling correlation IDs in requests and responses.
@@ -52,10 +53,17 @@ namespace Web.Api.Middleware
             // Store correlation ID in HttpContext items for other middleware and controllers to access
             context.Items["CorrelationId"] = correlationId;
 
-            _logger.LogDebug("Request {Method} {Path} has correlation ID {CorrelationId}",
-                context.Request.Method, context.Request.Path, correlationId);
+            // Push the correlation ID into Serilog's LogContext
+            using (LogContext.PushProperty("CorrelationId", correlationId))
+            {
+                _logger.LogDebug("Request {Method} {Path} has correlation ID {CorrelationId}",
+                    context.Request.Method, context.Request.Path, correlationId);
 
-            await _next(context);
+                await _next(context);
+
+                _logger.LogDebug("Response for {Method} {Path} completed with status {StatusCode}",
+                    context.Request.Method, context.Request.Path, context.Response.StatusCode);
+            }
         }
 
         private static string GetOrCreateCorrelationId(HttpContext context)

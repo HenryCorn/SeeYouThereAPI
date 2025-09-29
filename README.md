@@ -76,6 +76,26 @@ The API includes an in-memory caching system to improve performance and reduce c
 - **Cache Bypass**: Clients can bypass the cache by sending the `Cache-Control: no-cache` header
 - **Configuration**: Caching can be enabled/disabled and TTL adjusted via application settings
 
+#### Observability
+
+The API includes OpenTelemetry for comprehensive observability:
+
+- **Distributed Tracing**: Tracks request flow through the system and external dependencies
+  - Correlation IDs included in traces for request correlation
+  - HTTP client instrumentation for tracking external API calls
+  - Custom activity sources for internal operations
+
+- **Custom Metrics**: Tracks key performance indicators
+  - HTTP request counts with path and method dimensions
+  - HTTP error counts with status code information
+  - Cache hit/miss ratios for performance optimization
+  - Runtime metrics for application health monitoring
+
+- **Export Options**: Flexible telemetry data exporting
+  - OpenTelemetry Protocol (OTLP) exporter for integration with observability backends
+  - Console exporter for local development and debugging
+  - Configurable endpoint settings in application configuration
+
 ## Getting Started
 
 ### Prerequisites
@@ -85,7 +105,7 @@ The API includes an in-memory caching system to improve performance and reduce c
 
 ### Configuration
 
-Configure your flight data provider API keys and cache settings in `appsettings.json`:
+Configure your flight data provider API keys, cache settings, and OpenTelemetry in `appsettings.json`:
 
 ```json
 {
@@ -99,6 +119,12 @@ Configure your flight data provider API keys and cache settings in `appsettings.
   "Cache": {
     "Enabled": true,
     "FlightSearchCacheTtlMinutes": 10
+  },
+  "OpenTelemetry": {
+    "Enabled": true,
+    "OtlpEndpoint": "http://localhost:4317",
+    "EnableConsoleExporter": true,
+    "ServiceName": "SeeYouThereApi"
   }
 }
 ```
@@ -181,6 +207,47 @@ dotnet test
 
 1. Create a new implementation of `IFlightSearchClient` interface
 2. Register the implementation in the DI container in `Startup.cs`
+
+### Monitoring and Observability
+
+To visualize the telemetry data:
+
+1. Set up a local OpenTelemetry Collector or use cloud-based observability platforms
+2. Configure the OTLP endpoint in `appsettings.json`
+3. Run the application and observe traces and metrics
+
+For local development, metrics and traces are also logged to the console when `EnableConsoleExporter` is true.
+
+Example collector configuration:
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger]
+```
 
 ## License
 

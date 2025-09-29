@@ -72,10 +72,12 @@ namespace Core.External
             if (_cache.TryGetValue(cacheKey, out IEnumerable<FlightSearchResult> cachedResults))
             {
                 _logger.LogInformation("Cache hit for flight search request {CacheKey}", cacheKey);
+                TelemetryEvents.CacheHitsCounter.Add(1, new KeyValuePair<string, object>("operation", "SearchFlights"));
                 return cachedResults;
             }
 
             _logger.LogDebug("Cache miss for flight search request {CacheKey}", cacheKey);
+            TelemetryEvents.CacheMissesCounter.Add(1, new KeyValuePair<string, object>("operation", "SearchFlights"));
             var results = await _inner.SearchFlightsAsync(request, cancellationToken);
             var resultsList = results.ToList();
 
@@ -108,10 +110,12 @@ namespace Core.External
             if (_cache.TryGetValue(cacheKey, out IEnumerable<FlightSearchResult> cachedResults))
             {
                 _logger.LogInformation("Cache hit for cheapest destinations request {CacheKey}", cacheKey);
+                TelemetryEvents.CacheHitsCounter.Add(1, new KeyValuePair<string, object>("operation", "CheapestDestinations"));
                 return cachedResults;
             }
 
             _logger.LogDebug("Cache miss for cheapest destinations request {CacheKey}", cacheKey);
+            TelemetryEvents.CacheMissesCounter.Add(1, new KeyValuePair<string, object>("operation", "CheapestDestinations"));
             var results = await _inner.GetCheapestDestinationsAsync(request, cancellationToken);
             var resultsList = results.ToList();
 
@@ -144,10 +148,12 @@ namespace Core.External
             if (_cache.TryGetValue(cacheKey, out IEnumerable<FlightSearchResult> cachedResults))
             {
                 _logger.LogInformation("Cache hit for multiple origins flight search request {CacheKey}", cacheKey);
+                TelemetryEvents.CacheHitsCounter.Add(1, new KeyValuePair<string, object>("operation", "SearchFlightsMultipleOrigins"));
                 return cachedResults;
             }
 
             _logger.LogDebug("Cache miss for multiple origins flight search request {CacheKey}", cacheKey);
+            TelemetryEvents.CacheMissesCounter.Add(1, new KeyValuePair<string, object>("operation", "SearchFlightsMultipleOrigins"));
             var results = await _inner.SearchFlightsFromMultipleOriginsAsync(request, cancellationToken);
             var resultsList = results.ToList();
 
@@ -180,10 +186,12 @@ namespace Core.External
             if (_cache.TryGetValue(cacheKey, out IEnumerable<FlightSearchResult> cachedResults))
             {
                 _logger.LogInformation("Cache hit for multiple origins cheapest destinations request {CacheKey}", cacheKey);
+                TelemetryEvents.CacheHitsCounter.Add(1, new KeyValuePair<string, object>("operation", "CheapestDestinationsMultipleOrigins"));
                 return cachedResults;
             }
 
             _logger.LogDebug("Cache miss for multiple origins cheapest destinations request {CacheKey}", cacheKey);
+            TelemetryEvents.CacheMissesCounter.Add(1, new KeyValuePair<string, object>("operation", "CheapestDestinationsMultipleOrigins"));
             var results = await _inner.GetCheapestDestinationsFromMultipleOriginsAsync(request, cancellationToken);
             var resultsList = results.ToList();
 
